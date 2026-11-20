@@ -1,19 +1,39 @@
 import { detectCardBox } from './card-crop.js';
 
+// Tesseract viaja dentro de la app (vendor/tesseract): el OCR funciona sin internet, también en la APK.
+// Si por alguna razón no se encuentra la copia local, se usa la CDN como respaldo.
+const LOCAL_TESSERACT = './vendor/tesseract/tesseract.min.js';
+const CDN_TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 let tesseractPromise;
+let usingLocalTesseract = false;
+
+function injectScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR library did not initialize'));
+    script.onerror = () => { script.remove(); reject(new Error('No se pudo cargar el motor OCR.')); };
+    document.head.append(script);
+  });
+}
+
 function loadTesseract() {
   if (window.Tesseract) return Promise.resolve(window.Tesseract);
   if (!tesseractPromise) {
-    tesseractPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-      script.async = true;
-      script.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR library did not initialize'));
-      script.onerror = () => reject(new Error('Could not download OCR engine. Connect to the internet and retry.'));
-      document.head.append(script);
-    });
+    tesseractPromise = injectScript(LOCAL_TESSERACT)
+      .then(T => { usingLocalTesseract = true; return T; })
+      .catch(() => injectScript(CDN_TESSERACT))
+      .catch(() => { tesseractPromise = null; throw new Error('No se pudo cargar el motor OCR. Conéctate a internet y reintenta.'); });
   }
   return tesseractPromise;
+}
+
+/** Rutas absolutas a los archivos locales del OCR (núcleo WASM e idiomas). */
+function workerOptions(logger) {
+  if (!usingLocalTesseract) return { logger };
+  const base = new URL('./vendor/tesseract/', document.baseURI).href;
+  return { logger, workerPath: base + 'worker.min.js', corePath: base + 'core', langPath: base + 'lang', workerBlobURL: false };
 }
 
 const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-';
@@ -79,12 +99,10 @@ async function recognizeMultiPass(Tesseract, imageFile, onProgress) {
   const logger = message => {
     if (message.status === 'recognizing text') onProgress(Math.round((progressBase + (message.progress || 0) * progressSpan) * 100));
   };
-  const workers = {};
+  progressListener = logger;
+  let workers;
   try {
-    // Español + inglés para nombres; inglés solo para códigos (menos errores en dígitos).
-    try { workers.text = await Tesseract.createWorker('eng+spa', 1, { logger }); }
-    catch { workers.text = await Tesseract.createWorker('eng', 1, { logger }); }
-    workers.codes = await Tesseract.createWorker('eng', 1, { logger });
+    workers = await getWorkers(Tesseract);
     const results = [];
     for (let i = 0; i < JOBS.length; i++) {
       const job = JOBS[i];
@@ -101,15 +119,49 @@ async function recognizeMultiPass(Tesseract, imageFile, onProgress) {
       text, passes: results, titleText: by.title?.text || '',
       confidence: confident.length ? confident.reduce((sum, r) => sum + r.confidence, 0) / confident.length : 0
     };
+  } catch (error) {
+    await disposeWorkers();
+    throw error;
   } finally {
-    await Promise.all(Object.values(workers).map(w => w?.terminate?.().catch(() => {})));
+    progressListener = () => {};
+    scheduleDispose();
   }
 }
 
+// Los motores OCR se reutilizan entre fotos (cargar idiomas tarda varios segundos) y se liberan tras 3 min sin uso.
+let workerPool = null;
+let disposeTimer = null;
+let progressListener = () => {};
+function getWorkers(Tesseract) {
+  clearTimeout(disposeTimer);
+  if (!workerPool) {
+    const logger = message => progressListener(message);
+    workerPool = (async () => {
+      const pool = {};
+      // Español + inglés para nombres; inglés solo para códigos (menos errores en dígitos).
+      try { pool.text = await Tesseract.createWorker('eng+spa', 1, workerOptions(logger)); }
+      catch { pool.text = await Tesseract.createWorker('eng', 1, workerOptions(logger)); }
+      pool.codes = await Tesseract.createWorker('eng', 1, workerOptions(logger));
+      return pool;
+    })();
+    workerPool.catch(() => { workerPool = null; });
+  }
+  return workerPool;
+}
+async function disposeWorkers() {
+  clearTimeout(disposeTimer);
+  const pending = workerPool;
+  workerPool = null;
+  if (!pending) return;
+  try { const pool = await pending; await Promise.all(Object.values(pool).map(w => w?.terminate?.().catch(() => {}))); } catch { /* ya estaba cerrado */ }
+}
+function scheduleDispose() {
+  clearTimeout(disposeTimer);
+  disposeTimer = setTimeout(disposeWorkers, 3 * 60 * 1000);
+}
+
 async function recognizeLegacy(Tesseract, imageFile, onProgress) {
-  const result = await Tesseract.recognize(imageFile, 'eng', {
-    logger: message => { if (message.status === 'recognizing text') onProgress(Math.round((message.progress || 0) * 100)); }
-  });
+  const result = await Tesseract.recognize(imageFile, 'eng', workerOptions(message => { if (message.status === 'recognizing text') onProgress(Math.round((message.progress || 0) * 100)); }));
   return { text: result.data.text || '', passes: [], titleText: '', confidence: Number(result.data.confidence || 0) / 100 };
 }
 

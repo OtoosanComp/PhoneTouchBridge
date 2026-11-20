@@ -25,3 +25,6 @@ Dual Intelligence 0.8.1: Tsuki four-gate technical approval and Yami commercial 
 TCG OP 0.8.3: lectura de códigos independiente del idioma (ES/EN), selector de impresión, precio que cambia con acabado/edición/idioma y ajustes manuales. Tras actualizar pulsa 'Descargar / actualizar catálogos'. Ver RELEASE_NOTES_0.8.3.md.
 
 TCG OP 1.0.0: IA gratuita con Gemini (clave propia en Ajustes > opciones avanzadas). Ver RELEASE_NOTES_1.0.0.md.
+
+
+TCG OP 1.1.0: APK nativa (tcg-op/android), OCR sin internet, Gemini directo desde el teléfono, registro manual y edición de inventario. Ver docs/RELEASE_NOTES_1.1.0.md.

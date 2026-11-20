@@ -1,0 +1,54 @@
+name: TCG OP APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tcg-op/**'
+      - '.github/workflows/tcg-op-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Pruebas de la app web
+        working-directory: tcg-op/web
+        run: npm test
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Llave de firma (secreto TCG_OP_KEYSTORE_BASE64)
+        env:
+          KEYSTORE_B64: ${{ secrets.TCG_OP_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/tcg-op-release.jks"
+            echo "TCG_OP_KEYSTORE_FILE=$RUNNER_TEMP/tcg-op-release.jks" >> "$GITHUB_ENV"
+            echo "SIGNED=1" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin el secreto TCG_OP_KEYSTORE_BASE64 solo se genera una APK debug, que NO se puede instalar encima de la versión firmada."
+          fi
+
+      - name: Compilar APK
+        working-directory: tcg-op/android
+        env:
+          TCG_OP_KEYSTORE_PASSWORD: ${{ secrets.TCG_OP_KEYSTORE_PASSWORD }}
+          TCG_OP_KEY_ALIAS: ${{ secrets.TCG_OP_KEY_ALIAS }}
+          TCG_OP_KEY_PASSWORD: ${{ secrets.TCG_OP_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          if [ "$SIGNED" = "1" ]; then ./gradlew assembleRelease --no-daemon; else ./gradlew assembleDebug --no-daemon; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TCG-OP-apk
+          path: tcg-op/android/app/build/outputs/apk/**/*.apk

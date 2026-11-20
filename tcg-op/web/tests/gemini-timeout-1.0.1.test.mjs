@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import handler from '../netlify/functions/card-identify.mjs';
 import { DEFAULT_GEMINI_MODELS, geminiTimeBudgetMs } from '../netlify/functions/lib/gemini-provider.mjs';
-import { requestCloudCandidates } from '../src/card-intelligence/cloud.js';
+import { requestCloudCandidatesViaServer as requestCloudCandidates } from '../src/card-intelligence/cloud.js';
 
 const KEY = 'test-gemini-key-0123456789abcdef';
 const request = () => new Request('https://example.test/.netlify/functions/card-identify', {

@@ -1,5 +1,5 @@
 import { identifyCard } from './engine.js';
-import { mapIdentificationToForm, extractCardSignals, decideIdentification } from './core.js';
+import { mapIdentificationToForm, extractCardSignals, decideIdentification, CATALOG_GAMES } from './core.js';
 import { recognizeText } from './ocr.js';
 import { findCatalogCandidates } from './catalog.js';
 import { prepareImageForAnalysis } from './image-prep.js';
@@ -39,6 +39,30 @@ function showMessage(message, isError = false) {
   resultBox.append(p);
 }
 
+/** Segunda opinión con IA: reutiliza la foto ya girada/preparada y la lectura OCR del paso ①. */
+async function askCloud(button, idleText) {
+  const read = window.TCGReadResult;
+  const game = $('game').value;
+  button.disabled = true; button.textContent = 'Consultando a la IA…';
+  setTsukiActivity('busy', 'Tsuki consulta a la IA…', 'Enviando la foto a Gemini. Puede tardar unos segundos.');
+  try {
+    const retry = await identifyCard({
+      file: (read?.game === game && read.file) || window.TCGSelectedPhoto,
+      game, useCloud: true, ocr: read?.game === game ? read : null,
+      onProgress: text => setTsukiActivity('busy', 'Tsuki consulta a la IA…', text)
+    });
+    renderDecision(retry);
+    const found = Boolean(retry.candidate);
+    setTsukiActivity(found ? 'done' : 'warning', found ? 'La IA propuso una identificación' : 'La IA no encontró una coincidencia segura',
+      found ? 'Revisa los datos antes de aplicarlos.' : (retry.warning || 'Prueba con otra foto o registra la carta manualmente.'));
+  } catch (error) {
+    showMessage(error.message || 'No se pudo consultar la segunda opinión.', true);
+    setTsukiActivity('error', 'La IA no respondió', error.message || 'Reintenta en unos segundos.');
+  } finally {
+    button.disabled = false; button.textContent = idleText;
+  }
+}
+
 async function refreshValuation() {
   const c = window.TCGCurrentCandidate;
   if (!c) return;
@@ -55,7 +79,9 @@ async function refreshValuation() {
       $('priceSource').dataset.source = '';
     }
     $('priceSource').textContent = describeValuation(valuation);
-    if (valuation.status === 'available') {
+    if (valuation.estimateType === 'ai-estimate') {
+      setYamiActivity('warning', 'Yami solo tiene una estimación de la IA', 'No hay cotizaciones verificables de esta impresión. Revisa el precio antes de guardar.');
+    } else if (valuation.status === 'available') {
       setYamiActivity('done', '¡Yami encontró referencias!', `${valuation.sampleSize} fuente(s) comparables. Revisa la cotización antes de guardar.`);
     } else {
       setYamiActivity('warning', 'No hay precio verificable', 'Yami no encontró referencias comparables para esta impresión. Puedes escribir tu precio manual.');
@@ -68,6 +94,7 @@ async function refreshValuation() {
 
 function applyCandidate(decision, c, firstApply) {
   if (!c) return;
+  window.TCGSetManualMode?.(false);
   const fields = mapIdentificationToForm(c);
   $('cardDetails').hidden = false;
   $('addBtn').disabled = false;
@@ -137,7 +164,7 @@ function renderDecision(decision) {
   let selected = decision.candidate;
   const detail = document.createElement('p');
   detail.className = 'notice';
-  const detailText = (c, confidence) => `${c.name} · Código: ${c.collectorNumber || c.setCode || 'no leído'}${c.language ? ` · Idioma ${c.language}` : ''} · ${c.rarity || 'rareza pendiente'} · ${c.game} · Confianza: ${Math.round((confidence || 0) * 100)}%`;
+  const detailText = (c, confidence) => `${c.name} · Código: ${c.collectorNumber || c.setCode || 'no leído'}${c.language ? ` · Idioma ${c.language}` : ''} · ${c.rarity || 'rareza pendiente'} · ${c.game} · ${!confidence && (c.evidence || []).includes('cloud_visual') ? 'Propuesta de la IA (sin catálogo local)' : `Confianza: ${Math.round((confidence || 0) * 100)}%`}`;
   if (selected) {
     detail.textContent = detailText(selected, decision.confidence);
     resultBox.append(detail);
@@ -196,13 +223,14 @@ function renderDecision(decision) {
     if (window.TCGSelectedPhoto && navigator.onLine && cloudReady()) {
       const cloudButton = document.createElement('button');
       cloudButton.className = 'secondary';
-      cloudButton.textContent = 'Solicitar segunda opinión con IA (usa internet)';
-      cloudButton.addEventListener('click', async () => {
-        cloudButton.disabled = true; cloudButton.textContent = 'Consultando proveedor…';
-        try { const retry = await identifyCard({ file: window.TCGSelectedPhoto, game: $('game').value, useCloud: true, onProgress: showMessage }); renderDecision(retry); }
-        catch (error) { showMessage(error.message || 'No se pudo consultar la segunda opinión.', true); }
-      });
+      cloudButton.textContent = 'Identificar con IA (Gemini, usa internet)';
+      cloudButton.addEventListener('click', () => askCloud(cloudButton, 'Identificar con IA (Gemini, usa internet)'));
       resultBox.append(cloudButton);
+    } else if (!cloudReady()) {
+      const hint = document.createElement('p');
+      hint.className = 'notice';
+      hint.textContent = 'Consejo: con una clave gratuita de Gemini (Ajustes › opciones avanzadas) la IA puede identificar cartas que no están en el catálogo. También puedes usar «Registrar manualmente».';
+      resultBox.append(hint);
     }
     return;
   }
@@ -217,11 +245,7 @@ function renderDecision(decision) {
     const cloudButton = document.createElement('button');
     cloudButton.className = 'secondary';
     cloudButton.textContent = 'Contrastar con IA (opcional)';
-    cloudButton.addEventListener('click', async () => {
-      cloudButton.disabled = true; cloudButton.textContent = 'Consultando…';
-      try { const retry = await identifyCard({ file: window.TCGSelectedPhoto, game: $('game').value, useCloud: true, onProgress: showMessage }); renderDecision(retry); }
-      catch (error) { showMessage(error.message || 'No se pudo consultar la segunda opinión.', true); }
-    });
+    cloudButton.addEventListener('click', () => askCloud(cloudButton, 'Contrastar con IA (opcional)'));
     actions.append(cloudButton);
   }
   resultBox.append(actions);
@@ -241,6 +265,7 @@ readButton?.addEventListener('click', async () => {
   $('addBtn').disabled = true;
   window.TCGCardIntelAccepted = null;
   window.TCGCurrentCandidate = null;
+  window.TCGSetManualMode?.(false);
   try {
     const preparedFile = await prepareImageForAnalysis(file, window.TCGPhotoRotation || 0);
     const ocr = await recognizeText(preparedFile, () => {
@@ -274,6 +299,14 @@ searchButton?.addEventListener('click', async () => {
   searchButton.textContent = 'Tsuki está comparando…';
   setTsukiActivity('busy', 'Tsuki está comparando…', 'Contrastando códigos, passcode y nombre con las impresiones del catálogo.');
   $('readStatus').textContent = 'Buscando coincidencias verificables en el catálogo…';
+  if (!CATALOG_GAMES.includes(read.game)) {
+    renderDecision({ status: 'not_found', candidate: null, candidates: [], ocrText: read.text, catalogWarning: `No hay catálogo local para ${read.game}. Usa la IA (Gemini) o registra la carta manualmente.` });
+    setTsukiActivity('warning', 'Sin catálogo local para este juego', 'Tsuki puede pedir ayuda a la IA o puedes capturar los datos a mano.');
+    $('readStatus').textContent = 'Paso 2/2: este juego se identifica con IA o de forma manual.';
+    searchButton.disabled = false;
+    searchButton.textContent = '② Tsuki · Buscar impresión en catálogo';
+    return;
+  }
   try {
     const candidates = await findCatalogCandidates(read.game, read.text);
     const decision = decideIdentification(candidates);
@@ -328,3 +361,26 @@ window.TCGRecordLearning = async () => {
     return true;
   } catch (error) { console.warn('Learning memory not saved:', error); return false; }
 };
+
+// Registro manual: para cartas sin catálogo (Pokémon, Magic, otros) o cuando la foto no se puede leer.
+const MANUAL_FIELDS = ['cardName', 'cardCode', 'cardPasscode', 'setName', 'cardType', 'rarity', 'language', 'edition'];
+window.TCGSetManualMode = on => {
+  for (const id of MANUAL_FIELDS) { const el = $(id); if (el) el.readOnly = !on; }
+  document.body.classList.toggle('manual-entry', Boolean(on));
+  if ($('cardName')) $('cardName').placeholder = on ? 'Escribe el nombre de la carta' : 'Se completa tras verificar';
+};
+$('manualEntryBtn')?.addEventListener('click', () => {
+  window.TCGSetManualMode(true);
+  window.TCGCurrentCandidate = null;
+  window.TCGCardIntelAccepted = { source: 'Manual', status: 'manual', confidence: null, catalogId: null, reviewedAt: new Date().toISOString() };
+  $('game').disabled = false;
+  $('cardDetails').hidden = false;
+  $('addBtn').disabled = false;
+  if (yamiActivity) yamiActivity.hidden = true;
+  if (!$('price').dataset.value) {
+    $('priceSource').textContent = 'Registro manual: escribe tu precio si lo conoces. Sin catálogo no hay cotización automática.';
+    $('priceSource').dataset.source = '';
+  }
+  $('readStatus').textContent = 'Registro manual activo: completa al menos el nombre. La foto es opcional.';
+  $('cardName').focus();
+});

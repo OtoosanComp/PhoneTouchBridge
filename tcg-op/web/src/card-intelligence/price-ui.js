@@ -1,5 +1,6 @@
 import { estimateFairMarketValue } from './fair-market.js';
 import { getMetadata } from './database.js';
+import { refreshUsdMxn } from './catalog-sync.js';
 import { getModifiers, mergeModifiers } from './price-modifiers.js';
 
 const round2 = value => Math.round(value * 100) / 100;
@@ -62,7 +63,10 @@ export function computeCandidatePrice({ candidate, game, version, language, fxRa
 }
 
 export async function applyCandidatePrice(candidate, game, versionValue, { language } = {}) {
-  const fx = await getMetadata('usdMxn').catch(() => null);
+  let fx = await getMetadata('usdMxn').catch(() => null);
+  // Sin tipo de cambio guardado (catálogos nunca descargados): se intenta obtener al momento si hay internet.
+  const stale = !fx?.fetchedAt || Date.now() - Date.parse(fx.fetchedAt) > 7 * 24 * 60 * 60 * 1000;
+  if ((!fx?.rate || stale) && globalThis.navigator?.onLine !== false) fx = await refreshUsdMxn().catch(() => fx);
   const mods = await getModifiers();
   const result = computeCandidatePrice({ candidate, game, version: versionValue, language, fxRate: fx?.rate || null, mods });
   return { ...result, fxDate: fx?.date || null };

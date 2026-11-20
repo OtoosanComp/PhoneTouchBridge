@@ -1,4 +1,4 @@
-import { decideIdentification, extractCardSignals, scoreCandidate } from './core.js';
+import { decideIdentification, extractCardSignals, scoreCandidate, VISION_GAMES, CATALOG_GAMES } from './core.js';
 import { recognizeText } from './ocr.js';
 import { findCatalogCandidates } from './catalog.js';
 import { requestCloudCandidates } from './cloud.js';
@@ -26,17 +26,19 @@ async function fileToDataUrl(file) {
   });
 }
 
-export async function identifyCard({ file, game, useCloud = false, onProgress = () => {} }) {
-  if (!file) throw new Error('Select a card photo first');
-  if (!['Riftbound', 'Yu-Gi-Oh!'].includes(game)) throw new Error('Choose Riftbound or Yu-Gi-Oh!');
+export async function identifyCard({ file, game, useCloud = false, ocr: priorOcr = null, onProgress = () => {} }) {
+  if (!file) throw new Error('Selecciona primero una fotografía de la carta.');
+  if (!VISION_GAMES.includes(game)) throw new Error('Juego no compatible con la identificación.');
 
-  onProgress('Reading card locally…');
-  const ocr = await recognizeText(file, value => onProgress(`Local OCR: ${value}%`));
-  const signals = extractCardSignals(ocr.text);
+  // Si Tsuki ya leyó esta foto (paso ①), se reutiliza la lectura: no se repite el OCR completo.
+  const ocr = priorOcr?.text !== undefined ? priorOcr : (onProgress('Tsuki está leyendo la carta…'), await recognizeText(file, () => {}));
+  const signals = extractCardSignals(ocr.text || '');
   let localCandidates = [];
   let catalogWarning = '';
-  try { localCandidates = await findCatalogCandidates(game, ocr.text); }
-  catch (error) { catalogWarning = error.message; console.warn('Local catalog unavailable:', error); }
+  if (CATALOG_GAMES.includes(game)) {
+    try { localCandidates = await findCatalogCandidates(game, ocr.text || ''); }
+    catch (error) { catalogWarning = error.message; console.warn('Local catalog unavailable:', error); }
+  } else catalogWarning = `No hay catálogo local para ${game}; la identificación depende de la IA y de tu confirmación.`;
   // Recognition never queries remote catalog endpoints during a scan.
 
   let cloudCandidates = [];
@@ -45,9 +47,9 @@ export async function identifyCard({ file, game, useCloud = false, onProgress = 
   let cloudWarning = '';
   try {
     if (!shouldRequestCloudCandidates({ useCloud })) throw new Error('La segunda opinión en la nube no fue solicitada.');
-    onProgress('Checking visual evidence in the cloud…');
+    onProgress('Consultando a la IA (Gemini)… puede tardar unos segundos.');
     const imageDataUrl = await fileToDataUrl(file);
-    const cloudResult = await requestCloudCandidates({ imageDataUrl, game, ocrText: ocr.text });
+    const cloudResult = await requestCloudCandidates({ imageDataUrl, game, ocrText: ocr.text || '' }, fetch, { onModel: model => onProgress(`Consultando a la IA (${model})…`) });
     cloudCandidates = cloudResult.candidates;
     cloudProvider = cloudResult.provider;
     cloudModel = cloudResult.model;

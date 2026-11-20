@@ -8,7 +8,7 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
-<title>TCG OP 1.0.2 · Card Intelligence</title>
+<title>TCG OP 1.1 · Card Intelligence</title>
 <style>
 :root{color-scheme:dark;--bg:#100b17;--panel:#21152b;--panel2:#2b1b38;--line:#553b68;--text:#fff7ff;--muted:#c2afce;--pink:#ed77c5;--purple:#b66bff;--good:#72dfa5;--danger:#ff829c}
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#56316b 0,#21152c 38%,var(--bg) 75%);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
@@ -81,13 +81,16 @@ button.secondary{background:linear-gradient(135deg,#302943,#3c3150);border:1px s
 footer{padding-bottom:18px}
 @media(min-width:700px){.home-tools{grid-template-columns:repeat(4,minmax(0,1fr))}.home-hero{min-height:245px}.home-hero-copy{padding:30px}.tabbar{left:50%;right:auto;transform:translateX(-50%);width:min(680px,96vw);border:1px solid #55406f;border-bottom:0;border-radius:18px 18px 0 0}}
 @media(max-width:560px){main{padding:10px 10px 104px}.home-hero{min-height:188px}.home-hero>img{object-position:56% center;opacity:.57}.home-hero:after{background:linear-gradient(90deg,#151222f5 0%,#171326b8 70%,#17132670 100%)}.home-hero-copy{padding:18px 15px}.home-tools{gap:8px}.tool-card{min-height:74px;padding:10px;gap:9px}.tool-card .tool-icon{width:36px;height:36px;flex-basis:36px}.tool-card strong{font-size:.8rem}.mascot-card{min-height:90px}.mascot-card img{width:82px;height:90px}.mascot-card .mascot-copy{padding:7px}.mascot-card strong{font-size:.75rem}.mascot-card small{font-size:.66rem}.activity-card img{width:92px;height:70px}.mascot-hint img{width:66px;height:56px}.stats{gap:6px}.stat{padding:9px 5px}}
+.photo-viewer{position:fixed;inset:0;z-index:50;background:#08070ef2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px}.photo-viewer img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:12px;border:1px solid #6a5285}
+.manual-entry #cardDetails input:not([readonly]){border-color:#a879d5}
+.item .merge-note{color:var(--gold);font-size:.75rem}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="./vendor/qrcode/qrcode.min.js" defer></script>
 </head>
 <body><main>
-<header class="appbar"><img src="./icons/icon-192.png" alt="TCG OP Nakamura Twins"><div><div class="eyebrow">Nakamura Twins Studio · Card Intelligence</div><h1 id="tabTitle">Centro de operaciones</h1></div><span class="app-version">v1.0.2</span></header>
+<header class="appbar"><img src="./icons/icon-192.png" alt="TCG OP Nakamura Twins"><div><div class="eyebrow">Nakamura Twins Studio · Card Intelligence</div><h1 id="tabTitle">Centro de operaciones</h1></div><span class="app-version" id="appVersion">v1.1.0</span></header>
 <div class="tab" id="tab-inicio">
 <section class="home-hero">
 <img src="./assets/twins-banner.webp" alt="" aria-hidden="true">
@@ -165,6 +168,7 @@ footer{padding-bottom:18px}
 <p class="notice">Recomendado: fotografía original desde la cámara del teléfono, con la carta completa, enfocada y sin reflejos. También puedes elegir una foto ya tomada desde tu galería.</p>
 <button type="button" id="readCardBtn" class="secondary" style="width:100%;margin-top:8px">① Tsuki · Leer texto y códigos</button>
 <button type="button" id="searchCatalogBtn" class="secondary" style="width:100%;margin-top:8px" hidden disabled>② Tsuki · Buscar impresión en catálogo</button>
+<button type="button" id="manualEntryBtn" class="secondary" style="width:100%;margin-top:8px">✎ Registrar manualmente (sin identificar)</button>
 <div id="readStatus" class="status" role="status"></div>
 <div id="tsukiActivity" class="activity-card" hidden aria-live="polite">
 <img src="./assets/tsuki-chibi.webp" alt="Tsuki pensando mientras analiza una carta">
@@ -184,7 +188,7 @@ footer{padding-bottom:18px}
 </div>
 <div class="tab" id="tab-ajustes" hidden>
 <section class="panel"><h2>⛁ Respaldo del inventario</h2>
-<div class="actions"><button class="secondary" id="exportBtn">Exportar respaldo JSON</button><button class="secondary" id="importBtn">Importar respaldo</button><input id="importFile" type="file" accept=".json,application/json" hidden></div><p class="notice">La base operativa permanece en este teléfono. La integración con Drive está reservada para una actualización futura y no está habilitada en esta versión.</p>
+<div class="actions"><button class="secondary" id="exportBtn">Exportar respaldo JSON</button><button class="secondary" id="importBtn">Importar respaldo</button><input id="importFile" type="file" accept=".json,application/json" hidden></div><p id="backupInfo" class="notice"></p><p class="notice">La base operativa permanece en este teléfono. La integración con Drive está reservada para una actualización futura y no está habilitada en esta versión.</p>
 </section>
 <section class="panel" id="catalogLibraryPanel">
 <h2>♧ Biblioteca Card Intelligence</h2>
@@ -239,8 +243,9 @@ footer{padding-bottom:18px}
 <p class="notice">Para activar Drive debes crear un OAuth Client ID de tipo aplicación web y autorizar el dominio de producción. No introduzcas contraseñas ni claves API aquí.</p>
 </section>
 <section class="panel"><h2>Instalar aplicación</h2><p class="notice">Si tu navegador permite instalación, aparecerá el botón. También puedes usar el menú del navegador y elegir “Instalar aplicación” o “Añadir a pantalla de inicio”.</p><button id="installBtn" class="secondary" hidden>Instalar TCG OP</button><div id="installStatus" class="status"></div></section>
-<footer>TCG OP 1.0.2 · Nakamura Twins Studio · Local-first</footer>
+<footer>TCG OP 1.1.0 · Nakamura Twins Studio · Local-first</footer>
 </div>
+<div id="photoViewer" class="photo-viewer" hidden role="dialog" aria-modal="true" aria-label="Fotografía de la carta"><img id="photoViewerImg" alt="Fotografía guardada de la carta"><div class="actions"><button type="button" class="secondary" id="photoViewerClose">Cerrar</button></div></div>
 <nav class="tabbar" aria-label="Secciones">
 <button type="button" data-go="inicio" class="active"><svg class="nav-ico"><use href="./assets/tcg-icons.svg#i-home"/></svg>Inicio</button>
 <button type="button" data-go="registrar"><svg class="nav-ico"><use href="./assets/tcg-icons.svg#i-scan"/></svg>Escáner</button>
@@ -278,20 +283,48 @@ $('game').addEventListener('change',updateVersionOptions);updateVersionOptions()
 function money(n){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n)||0)}
 function safeText(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){const q=$('filter').value.trim().toLocaleLowerCase();const rows=inventory.filter(x=>[x.name,x.cardCode,x.setName,x.rarity,x.game,x.version,x.finish,x.code].some(v=>String(v||'').toLocaleLowerCase().includes(q)));let pieces=0,value=0;inventory.forEach(x=>{pieces+=Number(x.stock)||0;value+=(x.price==null?0:(Number(x.stock)||0)*(Number(x.price)||0))});$('totalCards').textContent=pieces;$('totalTypes').textContent=inventory.length;$('stockValue').textContent=money(value);if($('homeTotalCards'))$('homeTotalCards').textContent=pieces;if($('homeTotalTypes'))$('homeTotalTypes').textContent=inventory.length;if($('homeStockValue'))$('homeStockValue').textContent=money(value);const host=$('inventory');host.replaceChildren();if(!rows.length){host.innerHTML='<div class="empty">'+(inventory.length?'No hay coincidencias.':'Aún no hay cartas registradas.')+'</div>';return}
-rows.forEach(item=>{const row=document.createElement('article');row.className='item';const info=document.createElement('div');info.innerHTML='<strong>'+safeText(item.name)+'</strong><div class="meta">'+safeText(item.game)+' · '+safeText(item.version||item.finish||'Normal')+' · '+safeText(item.rarity||'Rareza pendiente')+' · Stock: '+item.stock+'<br><span class="price">'+(item.price==null?'Sin cotización':money(item.price))+'</span> · Código '+safeText(item.cardCode||item.code||'Pendiente')+' · ID '+safeText(item.id)+'</div>';const acts=document.createElement('div');acts.className='item-actions';[['−1',()=>changeStock(item.id,-1)],['+1',()=>changeStock(item.id,1)],['Foto',()=>viewCardPhoto(item.id)],['QR',()=>showQR(item.id)],['Eliminar',()=>removeItem(item.id)]].forEach(([label,fn])=>{const b=document.createElement('button');b.textContent=label;b.className=label==='Eliminar'?'danger':'secondary';b.addEventListener('click',fn);acts.append(b)});row.append(info,acts);host.append(row)})}
-async function viewCardPhoto(id){try{const blob=await readCardPhoto(id);if(!blob)return alert('Esta carta no tiene fotografía guardada.');const url=URL.createObjectURL(blob);const win=window.open(url,'_blank');if(!win){const a=document.createElement('a');a.href=url;a.download='tcg-op-'+id+'.jpg';a.click()}setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){alert('No se pudo abrir la fotografía: '+e.message)}}
+rows.forEach(item=>{const row=document.createElement('article');row.className='item';const info=document.createElement('div');info.innerHTML='<strong>'+safeText(item.name)+'</strong><div class="meta">'+safeText(item.game)+' · '+safeText(item.version||item.finish||'Normal')+' · '+safeText(item.rarity||'Rareza pendiente')+' · Stock: '+item.stock+'<br><span class="price">'+(item.price==null?'Sin cotización':money(item.price))+'</span> · Código '+safeText(item.cardCode||item.code||'Pendiente')+' · ID '+safeText(item.id)+'</div>';const acts=document.createElement('div');acts.className='item-actions';[['−1',()=>changeStock(item.id,-1)],['+1',()=>changeStock(item.id,1)],['Editar',()=>editItem(item.id)],...(item.photoId?[['Foto',()=>viewCardPhoto(item.photoId)]]:[]),['QR',()=>showQR(item.id)],['Eliminar',()=>removeItem(item.id)]].forEach(([label,fn])=>{const b=document.createElement('button');b.textContent=label;b.className=label==='Eliminar'?'danger':'secondary';b.addEventListener('click',fn);acts.append(b)});row.append(info,acts);host.append(row)})}
+// Visor dentro de la app: window.open con blob: no funciona dentro de la APK.
+let viewerUrl=null;
+function closePhotoViewer(){$('photoViewer').hidden=true;$('photoViewerImg').removeAttribute('src');if(viewerUrl){URL.revokeObjectURL(viewerUrl);viewerUrl=null}}
+async function viewCardPhoto(id){try{const blob=await readCardPhoto(id);if(!blob)return alert('Esta carta no tiene fotografía guardada.');closePhotoViewer();viewerUrl=URL.createObjectURL(blob);$('photoViewerImg').src=viewerUrl;$('photoViewer').hidden=false}catch(e){alert('No se pudo abrir la fotografía: '+e.message)}}
+$('photoViewerClose').addEventListener('click',closePhotoViewer);$('photoViewer').addEventListener('click',e=>{if(e.target.id==='photoViewer')closePhotoViewer()});
+function editItem(id){const item=inventory.find(x=>x.id===id);if(!item)return;
+  const priceRaw=prompt('Precio por pieza en MXN para «'+item.name+'».\nDéjalo vacío para «Sin cotización».',item.price==null?'':String(item.price));if(priceRaw===null)return;
+  const priceText=priceRaw.trim().replace(',','.');const price=priceText===''?null:Number(priceText);if(price!==null&&(!Number.isFinite(price)||price<0))return alert('Escribe un precio válido (número mayor o igual a 0).');
+  const stockRaw=prompt('Cantidad en inventario:',String(item.stock));if(stockRaw===null)return;const stock=Number(stockRaw.trim());if(!Number.isInteger(stock)||stock<0)return alert('La cantidad debe ser un entero mayor o igual a 0.');
+  if(price!==item.price){item.price=price;item.priceSource=price==null?null:'Ajuste manual del propietario'}item.stock=stock;item.updatedAt=new Date().toISOString();persist()}
 function changeStock(id,delta){const item=inventory.find(x=>x.id===id);if(!item)return;if(item.stock+delta<0)return alert('El stock no puede ser negativo.');item.stock+=delta;persist()}
 function removeItem(id){if(confirm('¿Eliminar esta carta del inventario?')){inventory=inventory.filter(x=>x.id!==id);persist()}}
-$('addBtn').addEventListener('click',async()=>{const name=$('cardName').value.trim(),code=$('cardCode').value.trim(),stock=Number($('stock').value);if(!name||!window.TCGCardIntelAccepted||!window.TCGSelectedPhoto)return alert('Primero analiza una fotografía y confirma una identificación válida. El código puede quedar pendiente si no es legible.');if(!Number.isInteger(stock)||stock<1)return alert('La cantidad debe ser un entero mayor que cero.');const id='TCG-'+crypto.randomUUID().slice(0,8).toUpperCase();let photoId=null;try{photoId=await saveCardPhoto(window.TCGSelectedPhoto,id)}catch(e){return alert('No se pudo guardar la fotografía localmente: '+e.message)}const priceValue=$('price').dataset.value;const price=priceValue!==undefined&&priceValue!==''?Number(priceValue):null;if(window.TCGRecordLearning)await window.TCGRecordLearning();inventory.unshift({id,game:$('game').value,name,cardCode:code,cardPasscode:$('cardPasscode').value,setName:$('setName').value,cardType:$('cardType').value,rarity:$('rarity').value,language:$('language').value,edition:$('edition').value,version:$('version').value,finish:$('version').value,price,priceSource:$('priceSource').dataset.source||null,stock,photoId,identification:window.TCGCardIntelAccepted,createdAt:new Date().toISOString()});window.TCGCardIntelAccepted=null;window.TCGCurrentCandidate=null;window.TCGReadResult=null;persist();['cardName','cardCode','cardPasscode','setName','cardType','rarity','language','edition','price'].forEach(id=>$(id).value='');$('cardDetails').hidden=true;$('addBtn').disabled=true;$('searchCatalogBtn').hidden=true;$('searchCatalogBtn').disabled=true;$('readStatus').textContent='';$('price').dataset.value='';$('priceSource').dataset.source='';$('game').disabled=false;$('stock').value='1';$('photoInput').value='';$('cameraInput').value='';window.TCGSelectedPhoto=null;window.TCGPhotoRotation=0;$('previewImg').style.display='none';$('photoTools').hidden=true;$('intelResult').style.display='none';});
+function sameCard(a,b){const ka=a.identification?.catalogId,kb=b.identification?.catalogId;const norm=v=>String(v||'').trim().toLocaleLowerCase();return a.game===b.game&&norm(a.version)===norm(b.version)&&norm(a.language)===norm(b.language)&&(ka&&kb?ka===kb:norm(a.name)===norm(b.name)&&norm(a.cardCode)===norm(b.cardCode)&&norm(a.rarity)===norm(b.rarity))}
+function resetRegisterForm(){window.TCGCardIntelAccepted=null;window.TCGCurrentCandidate=null;window.TCGReadResult=null;window.TCGSetManualMode?.(false);['cardName','cardCode','cardPasscode','setName','cardType','rarity','language','edition','price'].forEach(id=>$(id).value='');$('cardDetails').hidden=true;$('addBtn').disabled=true;$('searchCatalogBtn').hidden=true;$('searchCatalogBtn').disabled=true;$('readStatus').textContent='';$('price').dataset.value='';$('priceSource').dataset.source='';$('game').disabled=false;$('stock').value='1';$('photoInput').value='';$('cameraInput').value='';window.TCGSelectedPhoto=null;window.TCGPhotoRotation=0;$('previewImg').style.display='none';$('previewImg').style.transform='none';$('photoTools').hidden=true;$('intelResult').style.display='none';['tsukiActivity','yamiActivity'].forEach(id=>{if($(id))$(id).hidden=true})}
+$('addBtn').addEventListener('click',async()=>{
+  const accepted=window.TCGCardIntelAccepted,manual=accepted?.status==='manual';
+  const name=$('cardName').value.trim(),code=$('cardCode').value.trim(),stock=Number($('stock').value);
+  if(!accepted||!name||(!manual&&!window.TCGSelectedPhoto))return alert(manual?'Escribe al menos el nombre de la carta.':'Primero analiza una fotografía y confirma una identificación válida. El código puede quedar pendiente si no es legible.');
+  if(!Number.isInteger(stock)||stock<1)return alert('La cantidad debe ser un entero mayor que cero.');
+  const priceValue=$('price').dataset.value;const price=priceValue!==undefined&&priceValue!==''?Number(priceValue):null;
+  const record={game:$('game').value,name,cardCode:code,cardPasscode:$('cardPasscode').value,setName:$('setName').value,cardType:$('cardType').value,rarity:$('rarity').value,language:$('language').value,edition:$('edition').value,version:$('version').value,finish:$('version').value,price,priceSource:$('priceSource').dataset.source||null,stock,identification:manual?{...accepted,cardName:name,cardCode:code,setName:$('setName').value,rarity:$('rarity').value||null,language:$('language').value||null}:accepted};
+  // Misma impresión, acabado e idioma: se suma al registro existente en vez de duplicarlo.
+  const existing=inventory.find(x=>sameCard(x,record));
+  if(existing&&confirm('Ya tienes «'+existing.name+'» ('+(existing.version||'Normal')+') con '+existing.stock+' pieza(s).\n\nAceptar: sumar '+stock+' al registro existente.\nCancelar: crear un registro separado.')){
+    existing.stock+=stock;if(price!=null){existing.price=price;existing.priceSource=record.priceSource}existing.updatedAt=new Date().toISOString();
+    if(!existing.photoId&&window.TCGSelectedPhoto){try{existing.photoId=await saveCardPhoto(window.TCGSelectedPhoto,existing.id)}catch{}}
+    if(window.TCGRecordLearning)await window.TCGRecordLearning();
+    persist();$('formStatus').textContent='Se sumaron '+stock+' pieza(s) a «'+existing.name+'». Total: '+existing.stock+'.';resetRegisterForm();return}
+  const id='TCG-'+crypto.randomUUID().slice(0,8).toUpperCase();let photoId=null;
+  if(window.TCGSelectedPhoto){try{photoId=await saveCardPhoto(window.TCGSelectedPhoto,id)}catch(e){return alert('No se pudo guardar la fotografía localmente: '+e.message)}}
+  if(window.TCGRecordLearning)await window.TCGRecordLearning();
+  inventory.unshift({id,...record,photoId,createdAt:new Date().toISOString()});persist();resetRegisterForm();});
 $('filter').addEventListener('input',render);
 window.TCGSelectedPhoto=null;window.TCGPhotoRotation=0;
 function loadSelectedPhoto(file){
   if(!file)return;
   if(!file.type.startsWith('image/'))return alert('Selecciona una imagen válida.');
-  window.TCGSelectedPhoto=file;window.TCGPhotoRotation=0;window.TCGCardIntelAccepted=null;window.TCGCurrentCandidate=null;window.TCGReadResult=null;$('cardDetails').hidden=true;$('addBtn').disabled=true;$('searchCatalogBtn').hidden=true;$('searchCatalogBtn').disabled=true;$('readStatus').textContent='';
+  window.TCGSetManualMode?.(false);window.TCGSelectedPhoto=file;window.TCGPhotoRotation=0;window.TCGCardIntelAccepted=null;window.TCGCurrentCandidate=null;window.TCGReadResult=null;$('cardDetails').hidden=true;$('addBtn').disabled=true;$('searchCatalogBtn').hidden=true;$('searchCatalogBtn').disabled=true;$('readStatus').textContent='';
   ['cardName','cardCode','cardPasscode','setName','cardType','rarity','language','edition','price'].forEach(id=>$(id).value='');
   $('price').dataset.value='';$('game').disabled=false;$('intelResult').style.display='none';
-  const url=URL.createObjectURL(file);$('previewImg').src=url;$('previewImg').style.display='block';$('photoTools').hidden=false;
+  if(window.TCGPreviewUrl)URL.revokeObjectURL(window.TCGPreviewUrl);const url=URL.createObjectURL(file);window.TCGPreviewUrl=url;$('previewImg').src=url;$('previewImg').style.transform='none';$('previewImg').style.maxHeight='190px';$('previewImg').style.display='block';$('photoTools').hidden=false;
 }
 $('galleryBtn').addEventListener('click',()=>$('photoInput').click());
 $('cameraBtn').addEventListener('click',()=>$('cameraInput').click());
@@ -303,12 +336,18 @@ $('rotateRightBtn').addEventListener('click',()=>rotatePreview(90));
 $('resetPhotoBtn').addEventListener('click',()=>{window.TCGPhotoRotation=0;$('previewImg').style.transform='none';$('previewImg').style.maxHeight='190px';});
 
 window.TCGCreateBackupDocument=async()=>{const cards=[];for(const item of inventory){const copy={...item};if(item.photoId){const photo=await readCardPhoto(item.photoId);if(photo)copy.photoData=await blobToDataURL(photo)}cards.push(copy)}return {app:'TCG OP',version:2,exportedAt:new Date().toISOString(),cards}};
-$('exportBtn').addEventListener('click',async()=>{try{const cards=[];for(const item of inventory){const copy={...item};if(item.photoId){const photo=await readCardPhoto(item.photoId);if(photo)copy.photoData=await blobToDataURL(photo)}cards.push(copy)}const data={app:'TCG OP',version:2,exportedAt:new Date().toISOString(),cards};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='respaldo-tcg-op-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url)}catch(e){alert('No se pudo crear el respaldo completo: '+e.message)}});
+// Guardar archivos: en la APK se usa el puente nativo (los enlaces blob: no descargan dentro de WebView).
+window.TCGSaveTextFile=(filename,mime,text)=>{if(window.TCGAndroid?.saveTextFile){window.TCGAndroid.saveTextFile(filename,mime,text);return}const blob=new Blob([text],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)};
+$('exportBtn').addEventListener('click',async()=>{const btn=$('exportBtn');btn.disabled=true;try{const data=await window.TCGCreateBackupDocument();window.TCGSaveTextFile('respaldo-tcg-op-'+new Date().toISOString().slice(0,10)+'.json','application/json',JSON.stringify(data,null,2));if(!window.TCGAndroid)localStorage.setItem('tcg_op_last_backup',new Date().toISOString())}catch(e){alert('No se pudo crear el respaldo completo: '+e.message)}finally{btn.disabled=false}});
 $('importBtn').addEventListener('click',()=>$('importFile').click());
 $('importFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const raw=JSON.parse(await file.text());const cards=Array.isArray(raw)?raw:raw.cards;if(!Array.isArray(cards))throw Error('Formato no reconocido');const valid=cards.every(x=>x&&typeof x.name==='string'&&typeof x.game==='string'&&Number.isInteger(Number(x.stock))&&Number(x.stock)>=0&&Number.isFinite(Number(x.price))&&Number(x.price)>=0);if(!valid)throw Error('Hay registros con campos inválidos');if(!confirm('Se importarán '+cards.length+' registros y se reemplazará el inventario actual. ¿Continuar?'))return;inventory=[];for(const x of cards){const id=String(x.id||('TCG-'+crypto.randomUUID().slice(0,8).toUpperCase()));const photoData=x.photoData;const clean={...x,id,stock:Number(x.stock),price:x.price==null?null:Number(x.price)};delete clean.photoData;if(photoData){clean.photoId=id;await saveCardPhoto(dataURLToBlob(photoData),id)}inventory.push(clean)}persist();alert('Respaldo restaurado correctamente, incluidas las fotografías disponibles.')}catch(err){alert('No se pudo importar: '+err.message)}finally{e.target.value=''}});
 function showQR(id){const item=inventory.find(x=>x.id===id);if(!item)return;$('qrDetails').textContent=item.name+' · '+item.game+' · '+(item.price==null?'Sin cotización':money(item.price));$('qrcode').replaceChildren();if(window.QRCode){new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,name:item.name,game:item.game,finish:item.finish,price:item.price}),width:180,height:180})}else{$('qrcode').textContent='No se pudo cargar el generador QR. Comprueba tu conexión.'}$('qrPanel').style.display='block';$('qrPanel').scrollIntoView({behavior:'smooth'})}
 $('closeQr').addEventListener('click',()=>$('qrPanel').style.display='none');
 let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn').hidden=false});$('installBtn').addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn').hidden=true});
-if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW no registrado',e)));
+function renderBackupInfo(){const el=$('backupInfo');if(!el)return;let last=null;try{last=localStorage.getItem('tcg_op_last_backup')}catch{}if(!last){el.textContent=inventory.length?'Aún no has exportado un respaldo. Hazlo con frecuencia: si desinstalas la app o borras sus datos, el inventario se pierde.':'';return}const days=Math.floor((Date.now()-Date.parse(last))/86400000);el.textContent='Último respaldo exportado: '+(days<1?'hoy':days===1?'ayer':'hace '+days+' días')+'.'+(days>=7&&inventory.length?' Te conviene exportar uno nuevo.':'')}
+window.TCGOnFileSaved=ok=>{if(ok){try{localStorage.setItem('tcg_op_last_backup',new Date().toISOString())}catch{}}renderBackupInfo()};
+renderBackupInfo();window.addEventListener('tcg-op-data-changed',renderBackupInfo);$('exportBtn').addEventListener('click',()=>setTimeout(renderBackupInfo,500));
+if(window.TCGAndroid){const p=$('installBtn')?.closest('.panel');if(p)p.hidden=true;$('appVersion').title='Versión Android'}
+else if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW no registrado',e)));
 render();
 </script><script type="module" src="./src/card-intelligence/ui.js"></script><script type="module" src="./src/card-intelligence/catalog-admin.js"></script><script type="module" src="./src/card-intelligence/price-settings.js"></script><script type="module" src="./src/card-intelligence/ai-status.js"></script></body></html>

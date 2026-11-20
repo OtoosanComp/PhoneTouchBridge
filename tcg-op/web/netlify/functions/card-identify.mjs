@@ -6,7 +6,8 @@ import {
 } from './lib/vision-provider.mjs';
 import { GEMINI_BASE_URL, GEMINI_RULES, buildGeminiRequest, geminiModels, geminiResponseToPayload, geminiTimeBudgetMs, isPlausibleGeminiKey, shouldTryNextModel } from './lib/gemini-provider.mjs';
 
-const ALLOWED_GAMES = new Set(['Riftbound', 'Yu-Gi-Oh!']);
+import { VISION_GAMES } from './lib/vision-provider.mjs';
+const ALLOWED_GAMES = new Set(VISION_GAMES);
 const MAX_IMAGE_CHARS = 5_500_000;
 const ALLOWED_IMAGE = /^data:image\/(jpeg|jpg|png|webp);base64,[a-z0-9+/=]+$/i;
 const IDENTIFICATION_RULES = 'Return only identification evidence. Never output market prices, values, invented set codes, or guessed rarity. The catalog and human confirmation are authoritative.';

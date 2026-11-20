@@ -1,0 +1,78 @@
+plugins { id 'com.android.application' }
+
+// Versión de la app: súbela en cada entrega. versionCode debe crecer siempre para que Android acepte la actualización.
+def appVersionName = '1.1.0'
+def appVersionCode = 10100
+
+// Firma: la MISMA llave en todas las versiones, o Android no dejará actualizar encima de la app instalada.
+// Local: tcg-op/android/keystore.properties (no se sube a git). CI: variables de entorno TCG_OP_*.
+def keyProps = new Properties()
+def keyPropsFile = rootProject.file('keystore.properties')
+if (keyPropsFile.exists()) keyPropsFile.withInputStream { keyProps.load(it) }
+def signValue = { String prop, String env -> System.getenv(env) ?: keyProps.getProperty(prop) }
+def storePath = signValue('storeFile', 'TCG_OP_KEYSTORE_FILE')
+def hasReleaseKey = storePath != null && rootProject.file(storePath).exists()
+
+android {
+    namespace 'com.nakamuratwins.tcgop'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.nakamuratwins.tcgop'
+        minSdk 24
+        targetSdk 35
+        versionCode appVersionCode
+        versionName appVersionName
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            release {
+                storeFile rootProject.file(storePath)
+                storePassword signValue('storePassword', 'TCG_OP_KEYSTORE_PASSWORD')
+                keyAlias signValue('keyAlias', 'TCG_OP_KEY_ALIAS')
+                keyPassword signValue('keyPassword', 'TCG_OP_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (hasReleaseKey) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures { buildConfig true }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { outputFileName = "TCG-OP-${variant.versionName}-${variant.buildType.name}.apk" }
+    }
+}
+
+// La app web (../../web) se copia dentro de la APK en cada compilación: una sola fuente para web y Android.
+def webDir = rootProject.file('../web')
+tasks.register('syncWebAssets', Sync) {
+    from(webDir) {
+        include 'index.html', 'manifest.json', 'icons/**', 'assets/**', 'src/**', 'catalogs/**', 'vendor/**'
+        exclude 'src/card-intelligence/drive-*'
+    }
+    into layout.projectDirectory.dir('src/main/assets/www')
+}
+preBuild.dependsOn 'syncWebAssets'
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.name == 'assembleRelease' || it.name == 'bundleRelease' } && !hasReleaseKey) {
+        throw new GradleException('Falta la llave de firma (keystore.properties o variables TCG_OP_*). Sin la misma llave no se puede actualizar la app instalada.')
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.core:core:1.13.1'
+}

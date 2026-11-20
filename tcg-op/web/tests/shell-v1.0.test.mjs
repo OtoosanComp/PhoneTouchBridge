@@ -35,11 +35,11 @@ test('el ajuste de Gemini sigue disponible sin exponer claves en el HTML', () =>
   assert.doesNotMatch(html, /AIza[0-9A-Za-z_-]{20,}/);
 });
 
-test('los recursos visuales y la PWA se versionan como 1.0.2', () => {
-  assert.equal(pkg.version, '1.0.2');
+test('los recursos visuales y la PWA se versionan como 1.1.0', () => {
+  assert.equal(pkg.version, '1.1.0');
   assert.match(manifest.name, /TCG OP/);
   assert.match(manifest.description, /Nakamura Twins/);
-  assert.match(sw, /tcg-op-shell-v102/);
+  assert.match(sw, /tcg-op-shell-v110/);
   for (const asset of ['assets/tsuki-chibi.webp', 'assets/yami-chibi.webp', 'assets/tcg-icons.svg']) {
     assert.ok(fs.existsSync(path.join(root, asset)), `Falta ${asset}`);
   }

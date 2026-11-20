@@ -9,3 +9,6 @@ Esta compilación es solo la interfaz táctil de prueba. Los botones y gestos to
 1. Sube todos los archivos y carpetas de este proyecto a un repositorio GitHub.
 2. Ve a Actions y ejecuta `Android APK`.
 3. Descarga el artifact `PhoneTouchBridge-debug-apk`.
+
+## TCG OP
+La app TCG OP (web + APK Android) vive en [`tcg-op/`](tcg-op/README.md).

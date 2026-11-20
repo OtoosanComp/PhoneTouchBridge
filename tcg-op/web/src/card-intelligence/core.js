@@ -1,7 +1,12 @@
 import { extractCodeCandidates, extractPasscodes, normalizePasscode, parseSetCode, detectEdition } from './codes.js';
 import { bigrams, nameSimilarity } from './text-match.js';
 
+import { VISION_GAMES } from './vision-parse.mjs';
+
+/** Juegos con catálogo local (OCR + catálogo). */
 export const SUPPORTED_GAMES = Object.freeze(['Riftbound', 'Yu-Gi-Oh!']);
+export const CATALOG_GAMES = SUPPORTED_GAMES;
+export { VISION_GAMES };
 export const AUTO_IDENTIFY_THRESHOLD = 0.94;
 export const MIN_CANDIDATE_MARGIN = 0.12;
 
@@ -133,7 +138,7 @@ export function validateVisionResult(value) {
   const allowed = new Set(['name', 'game', 'setCode', 'collectorNumber', 'language', 'rarity', 'edition', 'setName', 'set', 'type', 'cardType', 'visualDescription', 'evidence', 'priceEstimate']);
   for (const key of Object.keys(value)) if (!allowed.has(key)) throw new Error(`Vision result field not allowed: ${key}`);
   if (typeof value.name !== 'string' || !value.name.trim()) throw new Error('Vision result name is required');
-  if (!SUPPORTED_GAMES.includes(value.game)) throw new Error('Vision result game is not supported');
+  if (!VISION_GAMES.includes(value.game)) throw new Error('Vision result game is not supported');
   for (const key of ['setCode', 'collectorNumber', 'language', 'rarity', 'edition', 'setName', 'set', 'type', 'cardType', 'visualDescription']) {
     if (value[key] !== undefined && typeof value[key] !== 'string') throw new Error(`${key} must be text`);
   }
