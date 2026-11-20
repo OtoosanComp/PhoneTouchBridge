@@ -1,0 +1,36 @@
+{
+  "id": "./",
+  "name": "TCG OP 1.0 · Nakamura Twins Studio",
+  "short_name": "TCG OP",
+  "description": "Nakamura Twins Studio · Card Intelligence TCG para identificar, organizar y valorar tu colección con Tsuki y Yami.",
+  "lang": "es-MX",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#100e1b",
+  "theme_color": "#171326",
+  "categories": [
+    "games",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "prefer_related_applications": false
+}

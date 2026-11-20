@@ -1,0 +1,23 @@
+TCG OP 0.8.1 — Dual Intelligence Foundation
+Command: npm test
+Result: 49 tests passed, 0 failed, 0 skipped.
+
+Baseline suite: 40 tests passed.
+Dual workflow suite: 9 tests passed.
+
+Covered:
+- Four mandatory Tsuki technical gates.
+- Reviewer and evidence required for each gate.
+- Exact printingId required for printing approval.
+- Yami blocked until all gates pass.
+- Market listing blocked without technical approval.
+- Owner approval required before publication.
+- Seller response allowlist excludes private technical and owner notes.
+- Reopened technical gate revokes approval and increments revision.
+- Sale registration prevents a second sale of the same listing.
+
+Not verified by this test suite:
+- Browser UI integration.
+- Android/PWA runtime behavior.
+- Remote seller QR access or cloud authentication.
+- Real market provider data, FX feed, or real transaction persistence.

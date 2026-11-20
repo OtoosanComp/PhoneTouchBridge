@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171326">
+<meta name="description" content="Inventario local de cartas TCG: Riftbound, Yu-Gi-Oh! y más.">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>TCG OP 1.0.2 · Card Intelligence</title>
+<style>
+:root{color-scheme:dark;--bg:#100b17;--panel:#21152b;--panel2:#2b1b38;--line:#553b68;--text:#fff7ff;--muted:#c2afce;--pink:#ed77c5;--purple:#b66bff;--good:#72dfa5;--danger:#ff829c}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#56316b 0,#21152c 38%,var(--bg) 75%);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:850px;margin:auto;padding:14px 14px 48px}.hero{position:relative;overflow:hidden;border:1px solid #80539b;border-radius:22px;background:#160e20;box-shadow:0 12px 38px #0008;margin-bottom:16px}.hero img{display:block;width:100%;height:auto;max-height:360px;object-fit:cover;object-position:center 42%}.hero-copy{padding:14px 17px 17px;background:linear-gradient(90deg,#1b1025,#291735)}.eyebrow{color:var(--pink);font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:.7rem}.hero h1{margin:4px 0;font-size:1.65rem}.hero p{margin:0;color:var(--muted);font-size:.88rem}
+.panel{background:#21152bed;border:1px solid var(--line);border-radius:17px;padding:16px;margin:14px 0;box-shadow:0 8px 25px #0004}h2{font-size:1.05rem;margin:0 0 12px;color:#f0a5e0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#160f20;border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center}.stat strong{display:block;font-size:1.3rem}.stat span{font-size:.68rem;color:var(--muted);text-transform:uppercase}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.full{grid-column:1/-1}label{display:block;margin:10px 0 5px;color:var(--muted);font-size:.75rem;font-weight:750;text-transform:uppercase;letter-spacing:.04em}input,select{width:100%;min-height:44px;border:1px solid #694c7d;border-radius:10px;background:#130d1b;color:var(--text);padding:10px 11px;font:inherit}button{border:0;border-radius:11px;padding:11px 13px;min-height:42px;background:#8d43b7;color:white;font:700 .9rem system-ui;cursor:pointer}button:active{transform:scale(.98)}button.secondary{background:#463052;border:1px solid #76538a}button.good{background:#176b4a}button.danger{background:#87364e}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions>*{flex:1}.primary{width:100%;margin-top:15px;background:linear-gradient(100deg,#963fc0,#d44f9e)}.muted{color:var(--muted)}.item{border-top:1px solid #493354;padding:13px 0;display:grid;grid-template-columns:1fr auto;gap:10px}.item:first-child{border-top:0}.item strong{overflow-wrap:anywhere}.meta{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.5}.price{color:var(--good);font-weight:800}.item-actions{display:flex;flex-direction:column;gap:5px}.item-actions button{padding:7px 10px;min-height:34px;font-size:.75rem}.empty{text-align:center;color:var(--muted);padding:20px 4px}.notice{font-size:.8rem;color:var(--muted);line-height:1.5}.status{font-size:.78rem;color:var(--good);margin-top:8px}.intel-result{display:none;background:#160f20;border:1px solid #694c7d;border-radius:12px;padding:12px;margin-top:10px}.intel-result pre{white-space:pre-wrap;overflow-wrap:anywhere;font: .78rem/1.5 ui-monospace,monospace;color:#d9c8e5;max-height:130px;overflow:auto}.intel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.intel-actions button{flex:1}.preview{display:none;max-height:190px;max-width:100%;object-fit:contain;margin:10px auto;border-radius:10px;border:1px solid var(--line)}#qrPanel{display:none;text-align:center}#qrcode{background:white;padding:10px;width:max-content;max-width:100%;margin:12px auto;border-radius:8px}footer{text-align:center;color:var(--muted);font-size:.72rem;padding:16px}
+@media(max-width:480px){main{padding:10px 10px 35px}.hero img{max-height:300px}.hero h1{font-size:1.4rem}.grid{gap:0 8px}.panel{padding:13px}.item{grid-template-columns:1fr auto}}
+
+.appbar{display:flex;align-items:center;gap:12px;padding:6px 2px 8px}.appbar img{width:48px;height:48px;border-radius:14px;border:1px solid #80539b;object-fit:cover;box-shadow:0 6px 18px #0006}.appbar h1{margin:2px 0 0;font-size:1.3rem}
+main{padding-bottom:104px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:8px;justify-content:center;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#160d20f5;border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+.tabbar button{flex:1;max-width:260px;display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:1px solid transparent;color:var(--muted);font:700 .72rem system-ui;padding:6px 4px;min-height:54px}.tabbar button span{font-size:1.3rem;line-height:1}.tabbar button.active{color:#fff;background:#3a2349;border-color:#76538a}
+details.panel>summary{cursor:pointer;font-weight:800;color:#f0a5e0;font-size:1.05rem;list-style:none}details.panel>summary::-webkit-details-marker{display:none}details.panel[open]>summary{margin-bottom:12px}
+.summary{color:var(--muted);font-size:.8rem;margin:10px 0 6px}.summary span{color:var(--text);font-weight:800}
+.switch{display:flex;align-items:center;gap:10px;margin:0;text-transform:none;font-size:.92rem;letter-spacing:0;color:var(--text)}.switch input{width:auto;min-height:0}
+
+:root{color-scheme:dark;--bg:#100e1b;--panel:#1b1930;--panel2:#25213d;--line:#55406f;--text:#f8f4ff;--muted:#b9b1c9;--pink:#e98cbd;--purple:#b68ae8;--good:#78d9ae;--danger:#ff829c;--gold:#e7c17d}
+body{background:radial-gradient(ellipse at 50% -12%,#3c2859 0,#1a1730 38%,#100e1b 78%);background-attachment:fixed}
+main{max-width:1040px;padding:14px 16px 108px}
+.appbar{padding:5px 2px 14px;border-bottom:1px solid #3c3151;margin-bottom:16px}
+.appbar img{width:54px;height:54px;border-radius:16px;border:1px solid #a477ce;box-shadow:0 0 22px #9b65d755}
+.appbar .eyebrow{font-size:.65rem;letter-spacing:.2em}
+.appbar h1{font-size:1.25rem;letter-spacing:.02em}.app-version{margin-left:auto;color:#d7b4f1;border:1px solid #59436f;background:#251d37;border-radius:999px;padding:6px 10px;font-size:.7rem;font-weight:800;letter-spacing:.08em}
+.panel{background:linear-gradient(145deg,#211d36f5,#171628f5);border:1px solid #51406b;border-radius:18px;box-shadow:0 10px 28px #07061170}
+h2{color:#d9b5f4;letter-spacing:.01em}
+input,select{background:#12111f;border-color:#4e4166}
+input:focus,select:focus,button:focus-visible{outline:2px solid #d4a3fa;outline-offset:2px}
+button{background:linear-gradient(135deg,#8053b4,#a34d9c);border:1px solid #a879d5;box-shadow:0 4px 13px #07061155}
+button.secondary{background:linear-gradient(135deg,#302943,#3c3150);border:1px solid #66517f}
+.primary{background:linear-gradient(100deg,#8052b4,#ca69a7)}
+.tabbar{background:#100e1bf2;border-top:1px solid #59436f;backdrop-filter:blur(16px);gap:5px}
+.tabbar button{max-width:220px;min-height:58px;border-radius:13px;color:#aaa1bb;font-size:.68rem}
+.tabbar button .nav-ico{width:22px;height:22px;display:block}
+.tabbar button.active{background:linear-gradient(140deg,#4b3268,#382747);border-color:#a879d5;color:#fff;box-shadow:0 0 16px #a879d533}
+.tabbar button.active .nav-ico{color:#e5b9ff}
+.nav-ico{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.inline-ico{width:18px;height:18px;vertical-align:-4px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-right:5px}
+.home-hero{position:relative;overflow:hidden;border:1px solid #785b99;border-radius:22px;min-height:210px;background:#171326;box-shadow:0 15px 36px #07061180;margin-bottom:14px}
+.home-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 43%;opacity:.78}
+.home-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#151222f5 0%,#171326c9 43%,#17132630 100%)}
+.home-hero-copy{position:relative;z-index:1;padding:23px 20px;max-width:570px}
+.home-hero h2{font-size:clamp(1.4rem,4vw,2rem);margin:6px 0;color:#fff}
+.home-hero p{color:#ddd3e9;margin:0;max-width:390px;font-size:.9rem}
+.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px}
+.home-stat{background:#1b1930;border:1px solid #4f4168;border-radius:14px;padding:12px;text-align:center}
+.home-stat strong{display:block;font-size:1.25rem}.home-stat span{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.section-kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#bba1d6;font-weight:800;margin:18px 2px 9px}
+.home-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tool-card{display:flex;align-items:center;gap:12px;text-align:left;min-height:80px;padding:12px;border-radius:16px;background:linear-gradient(145deg,#27223e,#1a192c);border:1px solid #57456f;color:#f8f4ff}
+.tool-card .tool-icon{width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;background:#392c50;color:#d9b4f4}
+.tool-card .tool-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tool-card strong{display:block;font-size:.88rem}.tool-card small{display:block;color:#bdb3cd;font-size:.72rem;font-weight:500;margin-top:2px}
+.mascot-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.mascot-card{padding:0;overflow:hidden;display:flex;align-items:center;text-align:left;min-height:110px;background:#211c34;border:1px solid #6a5285;border-radius:16px;color:#fff}
+.mascot-card img{width:112px;height:108px;object-fit:cover;align-self:stretch}
+.mascot-card .mascot-copy{padding:10px;min-width:0}
+.mascot-card strong{display:block;font-size:.83rem}.mascot-card small{display:block;color:#c2b5d3;font-size:.7rem;line-height:1.35;margin-top:3px}
+.mascot-card.tsuki{border-color:#8e6cb2}.mascot-card.yami{border-color:#a96b92}
+.activity-card{display:flex;gap:12px;align-items:center;background:linear-gradient(115deg,#211b34,#171628);border:1px solid #675080;border-radius:15px;padding:10px;margin-top:12px}
+.activity-card[hidden]{display:none!important}.activity-card img{width:112px;height:78px;object-fit:cover;border-radius:10px;border:1px solid #8063a1}
+.activity-copy{flex:1;min-width:0}.activity-copy strong{display:block;color:#e6c6ff;font-size:.9rem}.activity-copy p{margin:3px 0 0;color:#c5bbd2;font-size:.77rem}
+.activity-card[data-state="busy"] img{animation:mascotThink 2.2s ease-in-out infinite}@keyframes mascotThink{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}.activity-card[data-state="warning"] .activity-copy strong{color:#e8c58a}.activity-card[data-state="error"] .activity-copy strong{color:#ff9eaf}
+.mascot-hint{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid #72527e;background:#241d34;border-radius:14px;margin:8px 0}
+.mascot-hint img{width:78px;height:62px;object-fit:cover;border-radius:9px}
+.mascot-hint strong{display:block;color:#e8b2d1;font-size:.82rem}.mascot-hint span{font-size:.73rem;color:#c4b9d0}
+.brand-label{color:#c6a5e6;font-weight:800;letter-spacing:.16em;font-size:.67rem;text-transform:uppercase}
+#tab-registrar>.panel:first-child>h2{display:flex;align-items:center;gap:8px}
+#readCardBtn,#searchCatalogBtn{font-size:.84rem}
+#readStatus{padding:0 2px}
+#intelResult{background:#171526;border-color:#6a5285}
+#priceSource{line-height:1.45}
+footer{padding-bottom:18px}
+@media(min-width:700px){.home-tools{grid-template-columns:repeat(4,minmax(0,1fr))}.home-hero{min-height:245px}.home-hero-copy{padding:30px}.tabbar{left:50%;right:auto;transform:translateX(-50%);width:min(680px,96vw);border:1px solid #55406f;border-bottom:0;border-radius:18px 18px 0 0}}
+@media(max-width:560px){main{padding:10px 10px 104px}.home-hero{min-height:188px}.home-hero>img{object-position:56% center;opacity:.57}.home-hero:after{background:linear-gradient(90deg,#151222f5 0%,#171326b8 70%,#17132670 100%)}.home-hero-copy{padding:18px 15px}.home-tools{gap:8px}.tool-card{min-height:74px;padding:10px;gap:9px}.tool-card .tool-icon{width:36px;height:36px;flex-basis:36px}.tool-card strong{font-size:.8rem}.mascot-card{min-height:90px}.mascot-card img{width:82px;height:90px}.mascot-card .mascot-copy{padding:7px}.mascot-card strong{font-size:.75rem}.mascot-card small{font-size:.66rem}.activity-card img{width:92px;height:70px}.mascot-hint img{width:66px;height:56px}.stats{gap:6px}.stat{padding:9px 5px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+</head>
+<body><main>
+<header class="appbar"><img src="./icons/icon-192.png" alt="TCG OP Nakamura Twins"><div><div class="eyebrow">Nakamura Twins Studio · Card Intelligence</div><h1 id="tabTitle">Centro de operaciones</h1></div><span class="app-version">v1.0.2</span></header>
+<div class="tab" id="tab-inicio">
+<section class="home-hero">
+<img src="./assets/twins-banner.webp" alt="" aria-hidden="true">
+<div class="home-hero-copy">
+<div class="brand-label">Nakamura Twins Studio · TCG OP 1.0</div>
+<h2>Centro de operaciones TCG</h2>
+<p>Identifica, organiza y valora tus cartas. Una plataforma para tu colección, con Tsuki y Yami como asistentes.</p>
+</div>
+</section>
+<div class="home-stats" aria-label="Resumen de colección">
+<div class="home-stat"><strong id="homeTotalCards">0</strong><span>Unidades</span></div>
+<div class="home-stat"><strong id="homeTotalTypes">0</strong><span>Registros</span></div>
+<div class="home-stat"><strong id="homeStockValue">$0</strong><span>Valor estimado MXN</span></div>
+</div>
+<div class="section-kicker">Herramientas TCG</div>
+<div class="home-tools">
+<button type="button" class="tool-card" data-go="registrar"><span class="tool-icon"><svg><use href="./assets/tcg-icons.svg#i-scan"/></svg></span><span><strong>Escanear carta</strong><small>Identificación y registro</small></span></button>
+<button type="button" class="tool-card" data-go="inventario"><span class="tool-icon"><svg><use href="./assets/tcg-icons.svg#i-cards"/></svg></span><span><strong>Colección</strong><small>Tu biblioteca de cartas</small></span></button>
+<button type="button" class="tool-card" data-go="inventario"><span class="tool-icon"><svg><use href="./assets/tcg-icons.svg#i-box"/></svg></span><span><strong>Inventario</strong><small>Existencias y QR de ficha</small></span></button>
+<button type="button" class="tool-card" data-go="ajustes"><span class="tool-icon"><svg><use href="./assets/tcg-icons.svg#i-book"/></svg></span><span><strong>Catálogos</strong><small>Biblioteca de impresiones</small></span></button>
+</div>
+<div class="section-kicker">Tus asistentes</div>
+<div class="mascot-grid">
+<button type="button" class="mascot-card tsuki" data-go="registrar">
+<img src="./assets/tsuki-chibi.webp" alt="Tsuki chibi con lentes pensando">
+<span class="mascot-copy"><strong>Tsuki · Card Intelligence</strong><small>Lee texto, códigos y compara impresiones.</small></span>
+</button>
+<button type="button" class="mascot-card yami" data-go="registrar">
+<img src="./assets/yami-chibi.webp" alt="Yami chibi en su fábrica de mercado">
+<span class="mascot-copy"><strong>Yami · Market Intelligence</strong><small>Prepara valoraciones con referencias disponibles.</small></span>
+</button>
+</div>
+<section class="panel" style="margin-top:14px">
+<h2>Flujo de trabajo</h2>
+<p class="notice">1. Fotografía una carta · 2. Tsuki lee y verifica · 3. Tú confirmas la impresión · 4. Yami consulta referencias de mercado · 5. Guarda en tu inventario.</p>
+</section>
+</div>
+<div class="tab" id="tab-registrar">
+<section class="panel"><h2>✦ Registrar carta</h2>
+<div class="grid">
+<div><label for="game">Juego</label><select id="game"><option>Riftbound</option><option>Yu-Gi-Oh!</option><option>Pokémon</option><option>Magic: The Gathering</option><option>Otro</option></select></div>
+<div class="full">
+<div id="cardDetails" hidden>
+<div><label for="version">Acabado / variante (editable)</label><select id="version"><option>Normal</option></select></div>
+<div><label for="stock">Cantidad en inventario</label><input id="stock" type="number" min="1" step="1" value="1"></div>
+<div><label for="cardName">Nombre oficial (catálogo)</label><input id="cardName" readonly placeholder="Se completa tras verificar"></div>
+<div><label for="cardCode">Código de colección</label><input id="cardCode" readonly placeholder="Se completa al verificar"></div>
+<div><label for="cardPasscode">Passcode</label><input id="cardPasscode" readonly placeholder="Ocho dígitos, si existe"></div>
+<div><label for="setName">Expansión / set</label><input id="setName" readonly placeholder="Pendiente de análisis"></div>
+<div><label for="cardType">Tipo / categoría</label><input id="cardType" readonly placeholder="Pendiente de análisis"></div>
+<div><label for="rarity">Rareza</label><input id="rarity" readonly placeholder="Pendiente de análisis"></div>
+<div><label for="language">Idioma</label><input id="language" readonly placeholder="Pendiente de análisis"></div>
+<div><label for="edition">Edición identificada</label><input id="edition" readonly placeholder="Pendiente de análisis"></div>
+<div class="full"><div id="yamiActivity" class="activity-card" hidden aria-live="polite">
+<img src="./assets/yami-chibi.webp" alt="Yami trabajando en su fábrica de valoración">
+<div class="activity-copy"><strong id="yamiActivityTitle">Yami está consultando el mercado…</strong><p id="yamiActivityDetail">Buscando referencias comparables para esta impresión.</p></div>
+</div></div>
+<div><label for="price">Cotización (MXN)</label><input id="price" inputmode="decimal" placeholder="Automático o escribe tu precio"></div>
+<div class="full"><div id="priceSource" class="notice">La cotización solo se mostrará cuando exista una fuente de mercado verificable. La IA no inventará precios.</div></div>
+</div>
+<div class="full">
+<label>Fotografía de la carta *</label>
+<div class="actions" style="margin:6px 0 10px">
+  <button type="button" class="secondary" id="galleryBtn"><svg class="inline-ico"><use href="./assets/tcg-icons.svg#i-gallery"/></svg> Elegir de galería</button>
+  <button type="button" class="secondary" id="cameraBtn"><svg class="inline-ico"><use href="./assets/tcg-icons.svg#i-camera"/></svg> Tomar foto</button>
+</div>
+<input id="photoInput" type="file" accept="image/*" hidden>
+<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+<img id="previewImg" class="preview" alt="Vista previa de carta">
+<div id="photoTools" class="actions" hidden>
+  <button type="button" class="secondary" id="rotateLeftBtn">↶ Girar 90°</button>
+  <button type="button" class="secondary" id="rotateRightBtn">↷ Girar 90°</button>
+  <button type="button" class="secondary" id="resetPhotoBtn">Restablecer</button>
+</div>
+<p class="notice">Recomendado: fotografía original desde la cámara del teléfono, con la carta completa, enfocada y sin reflejos. También puedes elegir una foto ya tomada desde tu galería.</p>
+<button type="button" id="readCardBtn" class="secondary" style="width:100%;margin-top:8px">① Tsuki · Leer texto y códigos</button>
+<button type="button" id="searchCatalogBtn" class="secondary" style="width:100%;margin-top:8px" hidden disabled>② Tsuki · Buscar impresión en catálogo</button>
+<div id="readStatus" class="status" role="status"></div>
+<div id="tsukiActivity" class="activity-card" hidden aria-live="polite">
+<img src="./assets/tsuki-chibi.webp" alt="Tsuki pensando mientras analiza una carta">
+<div class="activity-copy"><strong id="tsukiActivityTitle">Tsuki está analizando…</strong><p id="tsukiActivityDetail">Leyendo texto y características de la carta.</p></div>
+</div>
+<div id="intelResult" class="intel-result" aria-live="polite"></div>
+</div>
+</div>
+</div>
+<p class="notice">Los campos de la ficha permanecen ocultos hasta que Tsuki encuentre y tú apliques una impresión del catálogo. Después Yami prepara la valoración. La fotografía se conserva localmente.</p>
+<button class="primary" id="addBtn" disabled>Guardar en inventario local</button><div id="formStatus" class="status" role="status"></div>
+</section>
+</div>
+<div class="tab" id="tab-inventario" hidden>
+<section class="panel"><h2>♢ Inventario</h2><input id="filter" type="search" placeholder="Buscar por nombre, código o juego…"><p class="summary"><span id="totalCards">0</span> piezas · <span id="totalTypes">0</span> registros · valor estimado <span id="stockValue">$0</span></p><div id="inventory"><div class="empty">Aún no hay cartas registradas.</div></div></section>
+<section class="panel" id="qrPanel"><h2>QR de ficha</h2><div id="qrDetails"></div><div id="qrcode"></div><button class="secondary" id="closeQr">Cerrar QR</button></section>
+</div>
+<div class="tab" id="tab-ajustes" hidden>
+<section class="panel"><h2>⛁ Respaldo del inventario</h2>
+<div class="actions"><button class="secondary" id="exportBtn">Exportar respaldo JSON</button><button class="secondary" id="importBtn">Importar respaldo</button><input id="importFile" type="file" accept=".json,application/json" hidden></div><p class="notice">La base operativa permanece en este teléfono. La integración con Drive está reservada para una actualización futura y no está habilitada en esta versión.</p>
+</section>
+<section class="panel" id="catalogLibraryPanel">
+<h2>♧ Biblioteca Card Intelligence</h2>
+<p class="notice">Tsuki mantiene los catálogos locales; Yami consulta las referencias de mercado. La primera descarga requiere conexión y espacio disponible del navegador.</p>
+<button type="button" class="secondary" id="syncCatalogsBtn" style="width:100%">Descargar / actualizar catálogos</button>
+<div id="catalogSyncStatus" class="status" role="status">Biblioteca local pendiente de inicializar.</div>
+<p id="catalogSummary" class="notice">Riftbound: 0 · Yu-Gi-Oh!: 0 · Correcciones aprendidas: 0 · USD/MXN: sin actualizar</p>
+<p class="notice">Fuentes: RiftHunt, YGOPRODeck y Frankfurter. Los datos se guardan en IndexedDB. Las imágenes completas no se descargan en masa.</p>
+<button type="button" class="secondary" id="importAliasesBtn" style="width:100%;margin-top:8px">Importar nombres en español (JSON)</button>
+<input id="aliasesFile" type="file" accept=".json,application/json" hidden>
+<div id="aliasStatus" class="status" role="status"></div>
+<p class="notice">Las cartas en español se identifican por passcode y código impreso (LOB-SP005 = LOB-EN005). Los nombres en español se aprenden al guardar una carta; con este archivo puedes cargar muchos de una vez.</p>
+</section>
+<details class="panel" id="priceAdjustPanel">
+<summary>◈ Ajustes de precio (manuales)</summary>
+<p class="notice">Factores que multiplican la cotización base de la impresión. No son datos de mercado: ajústalos a lo que tú vendes. Riftbound usa la cotización real de cada acabado; el factor Foil solo se usa si no existe cotización foil.</p>
+<div class="grid">
+<div><label for="modUnlimited">Yu-Gi-Oh! · Unlimited ×</label><input id="modUnlimited" type="number" step="0.05" min="0.1"></div>
+<div><label for="mod1st">Yu-Gi-Oh! · 1st Edition ×</label><input id="mod1st" type="number" step="0.05" min="0.1"></div>
+<div><label for="modLimited">Yu-Gi-Oh! · Limited Edition ×</label><input id="modLimited" type="number" step="0.05" min="0.1"></div>
+<div><label for="modTin">Yu-Gi-Oh! · Collector Tin ×</label><input id="modTin" type="number" step="0.05" min="0.1"></div>
+<div><label for="modRiftFoil">Riftbound · Foil (sin cotización) ×</label><input id="modRiftFoil" type="number" step="0.05" min="0.1"></div>
+<div><label for="modRiftAlt">Riftbound · Alternate Art ×</label><input id="modRiftAlt" type="number" step="0.05" min="0.1"></div>
+<div><label for="modLangEn">Idioma inglés ×</label><input id="modLangEn" type="number" step="0.05" min="0.1"></div>
+<div><label for="modLangEs">Idioma español ×</label><input id="modLangEs" type="number" step="0.05" min="0.1"></div>
+</div>
+<button type="button" class="secondary" id="saveModifiersBtn" style="width:100%;margin-top:8px">Guardar ajustes de precio</button>
+<div id="modifiersStatus" class="status" role="status"></div>
+</details>
+<section class="panel"><label class="switch"><input type="checkbox" id="advancedToggle"> Mostrar opciones avanzadas (IA en la nube)</label><p class="notice">Apagado por defecto. La identificación local y el precio manual funcionan sin IA en la nube.</p></section>
+<section class="panel" id="aiConnectionPanel" hidden>
+<h2>✦ Card Intelligence · Conexión IA</h2>
+<p class="notice">Un solo motor con roles compartidos: Tsuki verifica cartas; Yami trabaja con mercado e inventario. La clave OpenAI permanece en Netlify, nunca dentro de la APK.</p>
+<label for="geminiKeyInput">Clave de Gemini (gratis, de Google AI Studio)</label>
+<input id="geminiKeyInput" type="password" autocomplete="off" placeholder="Pega tu clave de Gemini">
+<div class="actions"><button type="button" class="secondary" id="saveGeminiKeyBtn">Guardar clave Gemini en este dispositivo</button></div>
+<div id="geminiKeyStatus" class="status" role="status"></div>
+<p class="notice">La clave se guarda solo en este teléfono y se envía por HTTPS a tu función de Netlify, que la reenvía a Google. En el nivel gratuito Google puede usar el contenido para mejorar sus productos. Con esta clave no necesitas variables en Netlify.</p>
+<label for="aiAccessToken">Clave privada de acceso TCG OP (solo si usas OpenAI/otros desde el servidor)</label>
+<input id="aiAccessToken" type="password" autocomplete="off" placeholder="Pega la clave privada configurada en Netlify">
+<div class="actions"><button type="button" class="secondary" id="saveAiTokenBtn">Guardar clave en este dispositivo</button><button type="button" class="secondary" id="checkAiBtn">Comprobar conexión</button></div>
+<div id="aiConnectionStatus" class="status" role="status">Estado de IA pendiente de comprobar.</div>
+<p class="notice">No pegues aquí tu OpenAI API Key. Esa credencial se configura como variable privada en Netlify. La clave de acceso TCG OP solo protege tu función personal.</p>
+</section>
+<section class="panel" id="driveBackupPanel" hidden aria-hidden="true">
+<h2>☁ Google Drive · Respaldo y sincronización</h2>
+<p class="notice">El teléfono conserva el inventario y las fotos originales. Cuando haya conexión, puedes subir un respaldo JSON a la carpeta visible TCG_OP de tu Drive. La sincronización no es necesaria para vender ni consultar el inventario.</p>
+<label for="googleClientId">Google OAuth Client ID</label>
+<input id="googleClientId" type="text" autocomplete="off" placeholder="Tu ID de cliente de Google Cloud">
+<div class="actions"><button type="button" class="secondary" id="saveDriveConfigBtn">Guardar configuración</button><button type="button" id="driveBackupBtn">Conectar y respaldar en Drive</button></div>
+<div id="driveSyncStatus" class="status" role="status">Drive no conectado. Los datos locales están disponibles.</div>
+<p class="notice">Para activar Drive debes crear un OAuth Client ID de tipo aplicación web y autorizar el dominio de producción. No introduzcas contraseñas ni claves API aquí.</p>
+</section>
+<section class="panel"><h2>Instalar aplicación</h2><p class="notice">Si tu navegador permite instalación, aparecerá el botón. También puedes usar el menú del navegador y elegir “Instalar aplicación” o “Añadir a pantalla de inicio”.</p><button id="installBtn" class="secondary" hidden>Instalar TCG OP</button><div id="installStatus" class="status"></div></section>
+<footer>TCG OP 1.0.2 · Nakamura Twins Studio · Local-first</footer>
+</div>
+<nav class="tabbar" aria-label="Secciones">
+<button type="button" data-go="inicio" class="active"><svg class="nav-ico"><use href="./assets/tcg-icons.svg#i-home"/></svg>Inicio</button>
+<button type="button" data-go="registrar"><svg class="nav-ico"><use href="./assets/tcg-icons.svg#i-scan"/></svg>Escáner</button>
+<button type="button" data-go="inventario"><svg class="nav-ico"><use href="./assets/tcg-icons.svg#i-cards"/></svg>Colección</button>
+<button type="button" data-go="ajustes"><svg class="nav-ico"><use href="./assets/tcg-icons.svg#i-settings"/></svg>Ajustes</button>
+</nav>
+</main>
+<script>
+(function(){
+const tabs=['inicio','registrar','inventario','ajustes'],titles={inicio:'Centro de operaciones',registrar:'Escanear y registrar',inventario:'Colección e inventario',ajustes:'Ajustes'};
+function show(name){if(!tabs.includes(name))name='registrar';tabs.forEach(t=>{document.getElementById('tab-'+t).hidden=t!==name;const b=document.querySelector('.tabbar [data-go="'+t+'"]');if(b){b.classList.toggle('active',t===name);if(t===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')}});document.getElementById('tabTitle').textContent=titles[name];window.scrollTo(0,0)}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{if(location.hash==='#'+b.dataset.go)show(b.dataset.go);else location.hash=b.dataset.go}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+show(location.hash.slice(1)||'inicio');
+const adv=document.getElementById('advancedToggle'),panel=document.getElementById('aiConnectionPanel');
+try{adv.checked=localStorage.getItem('tcg_op_advanced')==='1'}catch{}
+function applyAdv(){panel.hidden=!adv.checked;try{localStorage.setItem('tcg_op_advanced',adv.checked?'1':'0')}catch{}}
+adv.addEventListener('change',applyAdv);applyAdv();
+})();
+</script>
+<script>
+'use strict';
+const STORAGE_KEY='tcg_op_inventory_v01';
+const $=id=>document.getElementById(id);
+let inventory=[];
+try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');inventory=Array.isArray(saved)?saved:[]}catch{inventory=[]}
+function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(inventory));window.dispatchEvent(new CustomEvent('tcg-op-data-changed'));render();$('formStatus').textContent='Guardado en este dispositivo.'}catch(e){alert('No se pudo guardar. Exporta un respaldo y libera espacio.');}}
+function openPhotoDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('TCGOPMedia',1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('cardPhotos'))req.result.createObjectStore('cardPhotos')};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function saveCardPhoto(file,id){if(!file)return null;const db=await openPhotoDB();return new Promise((resolve,reject)=>{const tx=db.transaction('cardPhotos','readwrite');tx.objectStore('cardPhotos').put(file,id);tx.oncomplete=()=>{db.close();resolve(id)};tx.onerror=()=>{db.close();reject(tx.error)}})}
+async function readCardPhoto(id){const db=await openPhotoDB();return new Promise((resolve,reject)=>{const req=db.transaction('cardPhotos','readonly').objectStore('cardPhotos').get(id);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}
+function blobToDataURL(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(blob)})}
+function dataURLToBlob(data){const [head,body]=data.split(',');const mime=head.match(/data:(.*?);base64/)?.[1]||'image/jpeg';const bytes=atob(body);const arr=new Uint8Array(bytes.length);for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);return new Blob([arr],{type:mime})}
+function updateVersionOptions(){const choices={'Riftbound':['Normal','Foil','Alternate Art'],'Yu-Gi-Oh!':['Unlimited','1st Edition','Limited Edition','Collector Tin'],'Pokémon':['Normal','Reverse Holo','Holo','Full Art','Alternate Art'],'Magic: The Gathering':['Normal','Foil','Etched Foil','Showcase'],'Otro':['Normal','Foil','Alternate Art']};const select=$('version');const old=select.value;select.replaceChildren(...(choices[$('game').value]||choices.Otro).map(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;return o}));if([...select.options].some(o=>o.value===old))select.value=old}
+$('game').addEventListener('change',updateVersionOptions);updateVersionOptions();
+function money(n){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n)||0)}
+function safeText(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){const q=$('filter').value.trim().toLocaleLowerCase();const rows=inventory.filter(x=>[x.name,x.cardCode,x.setName,x.rarity,x.game,x.version,x.finish,x.code].some(v=>String(v||'').toLocaleLowerCase().includes(q)));let pieces=0,value=0;inventory.forEach(x=>{pieces+=Number(x.stock)||0;value+=(x.price==null?0:(Number(x.stock)||0)*(Number(x.price)||0))});$('totalCards').textContent=pieces;$('totalTypes').textContent=inventory.length;$('stockValue').textContent=money(value);if($('homeTotalCards'))$('homeTotalCards').textContent=pieces;if($('homeTotalTypes'))$('homeTotalTypes').textContent=inventory.length;if($('homeStockValue'))$('homeStockValue').textContent=money(value);const host=$('inventory');host.replaceChildren();if(!rows.length){host.innerHTML='<div class="empty">'+(inventory.length?'No hay coincidencias.':'Aún no hay cartas registradas.')+'</div>';return}
+rows.forEach(item=>{const row=document.createElement('article');row.className='item';const info=document.createElement('div');info.innerHTML='<strong>'+safeText(item.name)+'</strong><div class="meta">'+safeText(item.game)+' · '+safeText(item.version||item.finish||'Normal')+' · '+safeText(item.rarity||'Rareza pendiente')+' · Stock: '+item.stock+'<br><span class="price">'+(item.price==null?'Sin cotización':money(item.price))+'</span> · Código '+safeText(item.cardCode||item.code||'Pendiente')+' · ID '+safeText(item.id)+'</div>';const acts=document.createElement('div');acts.className='item-actions';[['−1',()=>changeStock(item.id,-1)],['+1',()=>changeStock(item.id,1)],['Foto',()=>viewCardPhoto(item.id)],['QR',()=>showQR(item.id)],['Eliminar',()=>removeItem(item.id)]].forEach(([label,fn])=>{const b=document.createElement('button');b.textContent=label;b.className=label==='Eliminar'?'danger':'secondary';b.addEventListener('click',fn);acts.append(b)});row.append(info,acts);host.append(row)})}
+async function viewCardPhoto(id){try{const blob=await readCardPhoto(id);if(!blob)return alert('Esta carta no tiene fotografía guardada.');const url=URL.createObjectURL(blob);const win=window.open(url,'_blank');if(!win){const a=document.createElement('a');a.href=url;a.download='tcg-op-'+id+'.jpg';a.click()}setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){alert('No se pudo abrir la fotografía: '+e.message)}}
+function changeStock(id,delta){const item=inventory.find(x=>x.id===id);if(!item)return;if(item.stock+delta<0)return alert('El stock no puede ser negativo.');item.stock+=delta;persist()}
+function removeItem(id){if(confirm('¿Eliminar esta carta del inventario?')){inventory=inventory.filter(x=>x.id!==id);persist()}}
+$('addBtn').addEventListener('click',async()=>{const name=$('cardName').value.trim(),code=$('cardCode').value.trim(),stock=Number($('stock').value);if(!name||!window.TCGCardIntelAccepted||!window.TCGSelectedPhoto)return alert('Primero analiza una fotografía y confirma una identificación válida. El código puede quedar pendiente si no es legible.');if(!Number.isInteger(stock)||stock<1)return alert('La cantidad debe ser un entero mayor que cero.');const id='TCG-'+crypto.randomUUID().slice(0,8).toUpperCase();let photoId=null;try{photoId=await saveCardPhoto(window.TCGSelectedPhoto,id)}catch(e){return alert('No se pudo guardar la fotografía localmente: '+e.message)}const priceValue=$('price').dataset.value;const price=priceValue!==undefined&&priceValue!==''?Number(priceValue):null;if(window.TCGRecordLearning)await window.TCGRecordLearning();inventory.unshift({id,game:$('game').value,name,cardCode:code,cardPasscode:$('cardPasscode').value,setName:$('setName').value,cardType:$('cardType').value,rarity:$('rarity').value,language:$('language').value,edition:$('edition').value,version:$('version').value,finish:$('version').value,price,priceSource:$('priceSource').dataset.source||null,stock,photoId,identification:window.TCGCardIntelAccepted,createdAt:new Date().toISOString()});window.TCGCardIntelAccepted=null;window.TCGCurrentCandidate=null;window.TCGReadResult=null;persist();['cardName','cardCode','cardPasscode','setName','cardType','rarity','language','edition','price'].forEach(id=>$(id).value='');$('cardDetails').hidden=true;$('addBtn').disabled=true;$('searchCatalogBtn').hidden=true;$('searchCatalogBtn').disabled=true;$('readStatus').textContent='';$('price').dataset.value='';$('priceSource').dataset.source='';$('game').disabled=false;$('stock').value='1';$('photoInput').value='';$('cameraInput').value='';window.TCGSelectedPhoto=null;window.TCGPhotoRotation=0;$('previewImg').style.display='none';$('photoTools').hidden=true;$('intelResult').style.display='none';});
+$('filter').addEventListener('input',render);
+window.TCGSelectedPhoto=null;window.TCGPhotoRotation=0;
+function loadSelectedPhoto(file){
+  if(!file)return;
+  if(!file.type.startsWith('image/'))return alert('Selecciona una imagen válida.');
+  window.TCGSelectedPhoto=file;window.TCGPhotoRotation=0;window.TCGCardIntelAccepted=null;window.TCGCurrentCandidate=null;window.TCGReadResult=null;$('cardDetails').hidden=true;$('addBtn').disabled=true;$('searchCatalogBtn').hidden=true;$('searchCatalogBtn').disabled=true;$('readStatus').textContent='';
+  ['cardName','cardCode','cardPasscode','setName','cardType','rarity','language','edition','price'].forEach(id=>$(id).value='');
+  $('price').dataset.value='';$('game').disabled=false;$('intelResult').style.display='none';
+  const url=URL.createObjectURL(file);$('previewImg').src=url;$('previewImg').style.display='block';$('photoTools').hidden=false;
+}
+$('galleryBtn').addEventListener('click',()=>$('photoInput').click());
+$('cameraBtn').addEventListener('click',()=>$('cameraInput').click());
+$('photoInput').addEventListener('change',e=>loadSelectedPhoto(e.target.files?.[0]));
+$('cameraInput').addEventListener('change',e=>loadSelectedPhoto(e.target.files?.[0]));
+function rotatePreview(delta){if(!window.TCGSelectedPhoto)return;window.TCGPhotoRotation=(window.TCGPhotoRotation+delta+360)%360;$('previewImg').style.transform=`rotate(${window.TCGPhotoRotation}deg)`;$('previewImg').style.maxHeight=window.TCGPhotoRotation%180?'320px':'190px';window.TCGCardIntelAccepted=null;$('intelResult').style.display='none'}
+$('rotateLeftBtn').addEventListener('click',()=>rotatePreview(-90));
+$('rotateRightBtn').addEventListener('click',()=>rotatePreview(90));
+$('resetPhotoBtn').addEventListener('click',()=>{window.TCGPhotoRotation=0;$('previewImg').style.transform='none';$('previewImg').style.maxHeight='190px';});
+
+window.TCGCreateBackupDocument=async()=>{const cards=[];for(const item of inventory){const copy={...item};if(item.photoId){const photo=await readCardPhoto(item.photoId);if(photo)copy.photoData=await blobToDataURL(photo)}cards.push(copy)}return {app:'TCG OP',version:2,exportedAt:new Date().toISOString(),cards}};
+$('exportBtn').addEventListener('click',async()=>{try{const cards=[];for(const item of inventory){const copy={...item};if(item.photoId){const photo=await readCardPhoto(item.photoId);if(photo)copy.photoData=await blobToDataURL(photo)}cards.push(copy)}const data={app:'TCG OP',version:2,exportedAt:new Date().toISOString(),cards};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='respaldo-tcg-op-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url)}catch(e){alert('No se pudo crear el respaldo completo: '+e.message)}});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const raw=JSON.parse(await file.text());const cards=Array.isArray(raw)?raw:raw.cards;if(!Array.isArray(cards))throw Error('Formato no reconocido');const valid=cards.every(x=>x&&typeof x.name==='string'&&typeof x.game==='string'&&Number.isInteger(Number(x.stock))&&Number(x.stock)>=0&&Number.isFinite(Number(x.price))&&Number(x.price)>=0);if(!valid)throw Error('Hay registros con campos inválidos');if(!confirm('Se importarán '+cards.length+' registros y se reemplazará el inventario actual. ¿Continuar?'))return;inventory=[];for(const x of cards){const id=String(x.id||('TCG-'+crypto.randomUUID().slice(0,8).toUpperCase()));const photoData=x.photoData;const clean={...x,id,stock:Number(x.stock),price:x.price==null?null:Number(x.price)};delete clean.photoData;if(photoData){clean.photoId=id;await saveCardPhoto(dataURLToBlob(photoData),id)}inventory.push(clean)}persist();alert('Respaldo restaurado correctamente, incluidas las fotografías disponibles.')}catch(err){alert('No se pudo importar: '+err.message)}finally{e.target.value=''}});
+function showQR(id){const item=inventory.find(x=>x.id===id);if(!item)return;$('qrDetails').textContent=item.name+' · '+item.game+' · '+(item.price==null?'Sin cotización':money(item.price));$('qrcode').replaceChildren();if(window.QRCode){new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,name:item.name,game:item.game,finish:item.finish,price:item.price}),width:180,height:180})}else{$('qrcode').textContent='No se pudo cargar el generador QR. Comprueba tu conexión.'}$('qrPanel').style.display='block';$('qrPanel').scrollIntoView({behavior:'smooth'})}
+$('closeQr').addEventListener('click',()=>$('qrPanel').style.display='none');
+let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn').hidden=false});$('installBtn').addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn').hidden=true});
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW no registrado',e)));
+render();
+</script><script type="module" src="./src/card-intelligence/ui.js"></script><script type="module" src="./src/card-intelligence/catalog-admin.js"></script><script type="module" src="./src/card-intelligence/price-settings.js"></script><script type="module" src="./src/card-intelligence/ai-status.js"></script></body></html>

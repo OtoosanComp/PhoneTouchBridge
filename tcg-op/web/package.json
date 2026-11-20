@@ -1,0 +1,13 @@
+{
+  "name": "tcg-op-card-intelligence",
+  "version": "1.0.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:ci": "node --test tests/*.test.js tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

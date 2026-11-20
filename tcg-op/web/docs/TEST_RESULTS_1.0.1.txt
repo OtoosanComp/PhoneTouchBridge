@@ -1,0 +1,7 @@
+TCG OP 1.0.1 — npm test (node --test)
+
+# tests 88
+# pass 88
+# fail 0
+# cancelled 0
+# skipped 0

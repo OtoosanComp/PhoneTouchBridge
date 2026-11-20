@@ -1,0 +1,14 @@
+TCG OP 0.8.3 — npm test (node --test)
+
+  duration_ms: 0.219658
+  type: 'test'
+  ...
+1..70
+# tests 70
+# suites 0
+# pass 70
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1035.16616

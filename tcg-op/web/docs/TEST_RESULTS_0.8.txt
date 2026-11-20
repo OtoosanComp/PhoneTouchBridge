@@ -1,0 +1,18 @@
+TCG OP 0.8 — Test results
+Date: 2026-11-07
+Runtime: Node.js v22.16.0
+Command: npm test
+
+Result: 37 tests passed, 0 failed, 0 skipped.
+
+Additional syntax checks:
+- node --check src/card-intelligence/engine.js
+- node --check src/card-intelligence/ui.js
+- node --check src/card-intelligence/drive-ui.js
+- node --check src/card-intelligence/drive-sync.mjs
+
+Not verified in this environment:
+- Real Google OAuth consent and Drive upload (requires user's OAuth Client ID and production origin).
+- Netlify deployment and PWA installation on the user's Android.
+- Real-world card recognition accuracy with labeled card photos.
+- First-run OCR in airplane mode: Tesseract is still CDN-loaded and must be locally vendored for guaranteed offline OCR.

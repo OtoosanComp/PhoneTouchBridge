@@ -1,0 +1,12 @@
+TCG OP 0.8 — compilación local-only (Google Drive reservado y deshabilitado)
+Fecha de ejecución: 2026-11-08
+Comando: npm test
+Resultado: 40 pruebas aprobadas, 0 fallidas, 0 omitidas.
+
+Verificaciones añadidas:
+- Panel de Drive oculto.
+- No se carga drive-ui.js.
+- Service Worker no precarga módulos de Drive.
+- Guardar inventario no genera tareas pendientes de Drive.
+
+Nota: estas pruebas automatizadas no sustituyen una prueba en Android/Chrome ni verifican OCR sin conexión, autenticación real o despliegue en Netlify.
